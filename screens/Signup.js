@@ -17,12 +17,17 @@ import { auth } from "../config/firebase";
 export default function Signup({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [button, setButton] = useState(false);
 
   const onHandleSignup = () => {
     if (email !== "" && password !== "") {
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(() => console.log("Signup success"))
-        .catch((err) => Alert.alert("Login error", err.message));
+        setButton(true);
+        const { user } = createUserWithEmailAndPassword(auth, email, password)
+          .then(() => {
+            console.log("Signup success");
+          })
+          .catch((err) => Alert.alert("Signup error", err.message),setButton(false));
+      }
     }
   };
 
@@ -52,7 +57,7 @@ export default function Signup({ navigation }) {
           value={password}
           onChangeText={(text) => setPassword(text)}
         />
-        <TouchableOpacity style={styles.button} onPress={onHandleSignup}>
+        <TouchableOpacity style={styles.button} onPress={onHandleSignup} disabled={button}>
           <Text style={{ fontWeight: "bold", color: "#fff", fontSize: 18 }}>
             {" "}
             Sign Up

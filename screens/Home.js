@@ -6,15 +6,20 @@ import colors from "../colors";
 import { Entypo } from "@expo/vector-icons";
 import { WidthInView } from "../components/WidthInView";
 import { LetterByLetterText } from "../components/LetterByLetter";
-import { onSnapshot, collection, where, query } from "@firebase/firestore";
+import {
+  onSnapshot,
+  collection,
+  where,
+  query,
+  orderBy,
+} from "@firebase/firestore";
 import { auth, database } from "../config/firebase";
 import { Context } from "../components/Context";
 import useContacts from "../components/useHooks";
 import ListItem from "../components/ListItems";
-import { signOut } from 'firebase/auth';
-import { AntDesign } from '@expo/vector-icons';
-const catImageUrl =
-  "https://i.guim.co.uk/img/media/26392d05302e02f7bf4eb143bb84c8097d09144b/446_167_3683_2210/master/3683.jpg?width=1200&height=1200&quality=85&auto=format&fit=crop&s=49ed3252c0b2ffb49cf8b508892e452d";
+import { signOut } from "firebase/auth";
+import { AntDesign } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const onSignOut = () => {
   signOut(auth).catch((error) => console.log("Error logging out: ", error));
 };
@@ -36,35 +41,79 @@ const Home = () => {
   const navigation = useNavigation();
   const contacts = useContacts();
   const { currentUser } = auth;
-  const { rooms, setRooms, unfilteredRooms,setUnfilteredRooms } = useContext(Context);
+  const { rooms, setRooms } = useContext(Context);
+
   const chatsQuery = query(
     collection(database, "rooms"),
-    where("participantsArray", "array-contains", currentUser.email)
+    where("participantsArray", "array-contains", currentUser.email),
+    orderBy("lastMessage.createdAt", "desc")
   );
-  useEffect(() => {
-    const unsubscribe = onSnapshot(chatsQuery, (querySnapshot) => {
-      const parsedChats = querySnapshot.docs
-        // .filter((doc) => doc.data().lastMessage)
-        .map((doc, i) => {
-          const userB =
-            doc
-              .data()
-              .participants.find((p) => p.email !== currentUser.email) ||
-            doc.data().participants.find((p) => p.email === currentUser.email);
-          return {
-            ...doc.data(),
-            id: doc.id,
-            userB,
-          };
-        });
 
-      {
-        console.log(parsedChats);
+  const LAST_UPDATED_AT = "roomsUPD";
+  useEffect(() => {
+    (async () => {
+      try {
+        const storedRooms = await AsyncStorage.getItem("rooms");
+        if (storedRooms !== null) {
+          setRooms(JSON.parse(storedRooms));
+        } else {
+          setRooms([]);
+        }
+      } catch (error) {
+        console.error("Error getting stored rooms:", error);
       }
-      setUnfilteredRooms(parsedChats)
-      setRooms(parsedChats);
-    });
-    return () => unsubscribe();
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      // await AsyncStorage.clear();
+      try {
+        const lastUpdatedAt = await AsyncStorage.getItem(LAST_UPDATED_AT);
+        console.log(lastUpdatedAt);
+        const queryWithLastUpdatedAt = lastUpdatedAt
+          ? query(
+              chatsQuery,
+              where("lastMessage.createdAt", ">", lastUpdatedAt)
+            )
+          : chatsQuery;
+          
+        const unsubscribe = onSnapshot(
+          queryWithLastUpdatedAt,
+          (querySnapshot) => {
+            const parsedChats = querySnapshot.docs.map((doc, i) => {
+              const userB =
+                doc
+                  .data()
+                  .participants.find((p) => p.email !== currentUser.email) ||
+                doc
+                  .data()
+                  .participants.find((p) => p.email === currentUser.email);
+
+              return {
+                ...doc.data(),
+                id: doc.id,
+                userB,
+              };
+            });
+            console.log(parsedChats);
+            if (parsedChats.length > 0) {
+              const lastChatUpdatedAt = parsedChats[0].lastMessage.createdAt;
+              console.log(lastChatUpdatedAt.toDate(), "123");
+              AsyncStorage.setItem(
+                LAST_UPDATED_AT,
+                JSON.stringify(lastChatUpdatedAt.toDate())
+              );
+              AsyncStorage.setItem("rooms", JSON.stringify(parsedChats));
+              setRooms(parsedChats);
+            }
+          }
+        );
+        return unsubscribe;
+      } catch (error) {
+        console.error("Error loading chats:", error);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -75,29 +124,22 @@ const Home = () => {
         >
           <FontAwesome name="search" size={24} color={"#fff"} />
         </TouchableOpacity>
-      ),headerRight: () => (
+      ),
+      headerRight: () => (
         <TouchableOpacity
           style={{
-            marginRight: 10
+            marginRight: 10,
           }}
           onPress={onSignOut}
         >
-          <AntDesign name="logout" size={24} color={colors.gray} style={{marginRight: 10}}/>
+          <AntDesign
+            name="logout"
+            size={24}
+            color={colors.gray}
+            style={{ marginRight: 10 }}
+          />
         </TouchableOpacity>
       ),
-      // headerRight: () => (
-      //   <View style={Object.assign({}, styles.chatButton, { marginRight: 15 })}>
-      //     <Image
-      //       source={{ uri: catImageUrl }}
-      //       style={{
-      //         width: 40,
-      //         height: 40,
-      //         borderTopLeftRadius: 28,
-      //         borderTopRightRadius: 28,
-      //       }}
-      //     />
-      //   </View>
-      // ),
       headerTitle: (props) => <LogoTitle />,
       headerStyle: { height: 100 },
       headerTitleContainerStyle: { paddingBottom: 10 },
@@ -106,9 +148,12 @@ const Home = () => {
     });
   }, [navigation]);
   function getUserB(user, contacts) {
-    const userContact = contacts.find((c) => c.email === user.email);
-    if (userContact && userContact.contactName) {
-      return { ...user, contactName: userContact.contactName };
+    let userContact;
+    if (contacts.length > 0) {
+      userContact = contacts.find((c) => c.email === user.email);
+      if (userContact && userContact.contactName) {
+        return { ...user, contactName: userContact.contactName };
+      }
     }
     return user;
   }

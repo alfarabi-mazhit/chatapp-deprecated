@@ -89,9 +89,6 @@ function ContactPreview({ contact, image }) {
       user={user}
       image={image}
       room={room}
-      //{unfilteredRooms.find((room) =>
-      //   room.participantsArray.includes(contact.email)
-      //   )}
     />
   );
 }

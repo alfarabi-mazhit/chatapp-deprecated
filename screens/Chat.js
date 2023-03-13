@@ -39,18 +39,17 @@ export default function Chat() {
   const route = useRoute();
   const { currentUser } = auth;
   const room = route.params.room;
-  const selectedImage = route.params.image;
   const userB = route.params.user;
   const roomId = room ? room.id : randomId;
   const roomRef = doc(database, "rooms", roomId);
   const roomMessagesRef = collection(database, "rooms", roomId, "messages");
-  const [roomHash, setRoomHash] = useState("");
   const [modalVisible,setModalVisible] = useState(false);
   const [selectedImageView,setSeletedImageView] = useState("");
   useEffect(() => {
     (async () => {
       if (!room) {
         const currentUserData = {
+          uid: currentUser.uid,
           displayName: currentUser.displayName,
           email: currentUser.email,
         };
@@ -58,6 +57,7 @@ export default function Chat() {
           currentUserData.photoURL = currentUser.photoURL;
         }
         const userBData = {
+          uid: userB.userDoc.uid,
           displayName: userB.userDoc.displayName,
           email: userB.userDoc.email,
         };
@@ -75,8 +75,6 @@ export default function Chat() {
         } catch (error) {
           console.log(error);
         }
-        const emailHash = `${currentUser.email}:${userB.email}`;
-        setRoomHash(emailHash);
       }
     })();
   }, []);

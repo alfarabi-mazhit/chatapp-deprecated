@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../config/firebase";
-const backImage = require("../assets/backImage.png");
 
 export default function Signup({ navigation }) {
   const [email, setEmail] = useState("");
@@ -29,7 +28,7 @@ export default function Signup({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Image source={backImage} style={styles.backImage} />
+      <Image style={styles.backImage} />
       <View style={styles.whiteSheet} />
       <SafeAreaView style={styles.form}>
         <Text style={styles.title}>Sign Up</Text>
@@ -103,6 +102,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   backImage: {
+    backgroundColor: "#f57c00",
     width: "100%",
     height: 340,
     position: "absolute",

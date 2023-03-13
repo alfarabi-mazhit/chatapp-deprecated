@@ -54,8 +54,6 @@ export default function SetProfile() {
     let status2 = await askForMediaLibPermission();
 
     if (status1 === "granted" || status2 === "granted") {
-      setCameraPermStatus(status1);
-      setMediaLibPermStatus(status2);
       const result = await pickImg();
       if (!result.canceled) {
         setSelectedImg(result.assets[0].uri);

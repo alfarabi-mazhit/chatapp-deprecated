@@ -40,7 +40,7 @@ export default function ListItem({
             {time && (
               <Col style={{ alignItems: "flex-end" }}>
                 <Text style={{ fontSize: 11 }}>
-                  {new Date(time.seconds * 1000).toLocaleDateString()}
+                  {new Date(time.seconds * 1000).toLocaleString()}
                 </Text>
               </Col>
             )}

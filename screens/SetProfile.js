@@ -18,6 +18,7 @@ export default function SetProfile() {
   const navigation = useNavigation();
   const [displayName, setDisplayName] = useState("");
   const [selectedImg, setSelectedImg] = useState(null);
+  const [button, setButton] = useState(false);
   useEffect(() => {
     navigation.setOptions({
       headerShown: false,
@@ -25,6 +26,7 @@ export default function SetProfile() {
   }, [navigation]);
 
   async function handlePress() {
+    setButton(true);
     const user = auth.currentUser;
     let photoURL;
     if (selectedImg) {
@@ -45,8 +47,11 @@ export default function SetProfile() {
     await Promise.all([
       updateProfile(user, userData),
       setDoc(doc(database, "users", user.uid), { ...userData, uid: user.uid }),
-    ]).then(navigation.navigate("Home")).catch(e=>{alert('Ошибка соединения. Повторите позже')});
-    
+    ])
+      .then(navigation.navigate("Home"))
+      .catch((e) => {
+        alert("Ошибка соединения. Повторите позже"), setButton(false);
+      });
   }
 
   async function handleProfilePicture() {
@@ -94,6 +99,7 @@ export default function SetProfile() {
             backgroundColor: "#f57c00",
             borderRadius: 100,
           }}
+          disabled={button}
         >
           {!selectedImg ? (
             <MaterialCommunityIcons size={45} name="camera-plus" />

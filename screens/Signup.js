@@ -29,7 +29,6 @@ export default function Signup({ navigation }) {
           .catch((err) => Alert.alert("Signup error", err.message),setButton(false));
       }
     }
-  };
 
   return (
     <View style={styles.container}>

@@ -13,7 +13,7 @@ import {
   query,
   orderBy,
 } from "@firebase/firestore";
-import { auth, database } from "../config/firebase";
+import { auth, database, timestamp } from "../config/firebase";
 import { Context } from "../components/Context";
 import useContacts from "../components/useHooks";
 import ListItem from "../components/ListItems";
@@ -53,11 +53,14 @@ const Home = () => {
   useEffect(() => {
     (async () => {
       try {
-        const storedRooms = await AsyncStorage.getItem("rooms");
-        if (storedRooms !== null) {
-          setRooms(JSON.parse(storedRooms));
+        // await AsyncStorage.clear();
+        let storedRooms = JSON.parse(await AsyncStorage.getItem("rooms"));
+        if (storedRooms !== null && storedRooms > 0) {
+          setRooms(storedRooms);
+          // console.log(storedRooms);
         } else {
           setRooms([]);
+          // console.log('пусто');
         }
       } catch (error) {
         console.error("Error getting stored rooms:", error);
@@ -67,17 +70,19 @@ const Home = () => {
 
   useEffect(() => {
     (async () => {
-      // await AsyncStorage.clear();
       try {
         const lastUpdatedAt = await AsyncStorage.getItem(LAST_UPDATED_AT);
-        console.log(lastUpdatedAt);
-        const queryWithLastUpdatedAt = lastUpdatedAt
+        // console.log(lastUpdatedAt);
+        const queryWithLastUpdatedAt = (!rooms && lastUpdatedAt)
           ? query(
               chatsQuery,
-              where("lastMessage.createdAt", ">", lastUpdatedAt)
+              where(
+                "lastMessage.createdAt",
+                ">",
+                timestamp(new Date(JSON.parse(lastUpdatedAt)).getTime())
+              )
             )
           : chatsQuery;
-          
         const unsubscribe = onSnapshot(
           queryWithLastUpdatedAt,
           (querySnapshot) => {
@@ -96,16 +101,25 @@ const Home = () => {
                 userB,
               };
             });
-            console.log(parsedChats);
+            // console.log(parsedChats,'parsedChats');
             if (parsedChats.length > 0) {
               const lastChatUpdatedAt = parsedChats[0].lastMessage.createdAt;
-              console.log(lastChatUpdatedAt.toDate(), "123");
               AsyncStorage.setItem(
                 LAST_UPDATED_AT,
                 JSON.stringify(lastChatUpdatedAt.toDate())
               );
-              AsyncStorage.setItem("rooms", JSON.stringify(parsedChats));
-              setRooms(parsedChats);
+              const updatedRooms = parsedChats;
+              // console.log(rooms,'rooms');
+              if (rooms > 0) {
+                updatedRooms = rooms.map((room) => {
+                  const updatedChat = parsedChats.find(
+                    (chat) => chat.id === room.id
+                  );
+                  return updatedChat ? updatedChat : room;
+                });
+              }
+              AsyncStorage.setItem("rooms", JSON.stringify(updatedRooms));
+              setRooms(updatedRooms);
             }
           }
         );

@@ -15,9 +15,9 @@ export default function useContacts() {
             data
               .filter(
                 (c) =>
-                  c.firstName && c.emails && c.emails[0] && c.emails[0].email
+                  c.firstName && c.emails 
               )
-              .map(mapContactToUser)
+              .map(mapContactToUser).reduce((acc, curr) => acc.concat(curr), [])
           );
         }
       }
@@ -25,23 +25,23 @@ export default function useContacts() {
   }, []);
   return contacts;
 }
-// function mapContactToUser(contact) {
-//   return contact.emails.map((email) => {
-//     return {
-//       contactName:
-//         contact.firstName && contact.lastName
-//           ? `${contact.firstName} ${contact.lastName}`
-//           : contact.firstName,
-//       email: email.email,
-//     };
-//   });
-// }
 function mapContactToUser(contact) {
-  return {
-    contactName:
-      contact.firstName && contact.lastName
-        ? `${contact.firstName} ${contact.lastName}`
-        : contact.firstName,
-    email: contact.emails[0].email,
-  };
+  return contact.emails.map((e) => {
+    return {
+      contactName:
+        contact.firstName && contact.lastName
+          ? `${contact.firstName} ${contact.lastName}`
+          : contact.firstName,
+      email: e.email,
+    };
+  });
 }
+// function mapContactToUser(contact) {
+//   return {
+//     contactName:
+//       contact.firstName && contact.lastName
+//         ? `${contact.firstName} ${contact.lastName}`
+//         : contact.firstName,
+//     email: contact.emails[0].email,
+//   };
+// }

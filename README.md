@@ -1,19 +1,24 @@
 # ChatApp
 
 
-# node_modules/.../MessageContainer.js
 
+
+// node_modules/.../MessageContainer.js
 this.attachKeyboardListeners = () => {
     const { invertibleScrollViewProps: invertibleProps } = this.props;
     if (invertibleProps) {
+
 -        Keyboard.addListener('keyboardWillShow', invertibleProps.onKeyboardWillShow);
 -        Keyboard.addListener('keyboardDidShow', invertibleProps.onKeyboardDidShow);
 -        Keyboard.addListener('keyboardWillHide', invertibleProps.onKeyboardWillHide);
 -        Keyboard.addListener('keyboardDidHide', invertibleProps.onKeyboardDidHide);
+
+
 +        this.willShowSub = Keyboard.addListener('keyboardWillShow', invertibleProps.onKeyboardWillShow);
 +        this.didShowSub = Keyboard.addListener('keyboardDidShow', invertibleProps.onKeyboardDidShow);
 +        this.willHideSub = Keyboard.addListener('keyboardWillHide', invertibleProps.onKeyboardWillHide);
 +        this.didHideSub = Keyboard.addListener('keyboardDidHide', invertibleProps.onKeyboardDidHide);
+  
     }
 };
 this.detachKeyboardListeners = () => {
@@ -27,3 +32,4 @@ this.detachKeyboardListeners = () => {
 +    this.willHideSub?.remove();
 +    this.didHideSub?.remove();
 };
+

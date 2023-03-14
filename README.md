@@ -1,7 +1,8 @@
 # ChatApp
 
 
-#node_modules/.../MessageContainer.js
+# node_modules/.../MessageContainer.js
+
 this.attachKeyboardListeners = () => {
     const { invertibleScrollViewProps: invertibleProps } = this.props;
     if (invertibleProps) {
